@@ -83,14 +83,11 @@
             background: #fff;
         }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        .form-group input.error {
+            border-color: #e74c3c;
         }
 
-        .form-group input:valid {
+        .form-group input.success {
             border-color: #4CAF50;
         }
 
@@ -248,6 +245,12 @@
             border-left: 4px solid #363;
         }
 
+        .field-error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -297,25 +300,34 @@
             <p>Secure Financial Management</p>
         </div>
 
-        <!-- Django error messages would go here -->
-        <!-- {% if messages %}
+        {% if messages %}
             {% for message in messages %}
-                <div class="error-message">{{ message }}</div>
+                <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+                    {{ message }}
+                </div>
             {% endfor %}
-        {% endif %} -->
+        {% endif %}
 
         <form method="post" id="loginForm">
             {% csrf_token %}
             
             <div class="form-group">
-                <label for="username">Username or Email</label>
-                <input type="text" id="username" name="username" required>
+                <label for="id_username">Username or Email</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-error">{{ form.username.errors.0 }}</div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-                <span class="password-toggle" onclick="togglePassword()">👁️</span>
+                <label for="id_password">Password</label>
+                <div style="position: relative;">
+                    {{ form.password }}
+                    <span class="password-toggle" onclick="togglePassword('id_password')">👁️</span>
+                </div>
+                {% if form.password.errors %}
+                    <div class="field-error">{{ form.password.errors.0 }}</div>
+                {% endif %}
             </div>
 
             <div class="remember-forgot">
@@ -328,24 +340,20 @@
 
             <button type="submit" class="login-btn">Sign In</button>
         </form>
-        {% if form.errors %}
-            <div style="color: red;">
-                {{ form.errors }}
-            </div>
-        {% endif %}
+
         <div class="divider">
             <span>New to FinanceHub?</span>
         </div>
 
         <div class="signup-link">
-            <p>Don't have an account? <a href="signup.html">Create Account</a></p>
+            <p>Don't have an account? <a href="{% url 'signup' %}">Create Account</a></p>
         </div>
     </div>
 
     <script>
-        function togglePassword() {
-            const passwordField = document.getElementById('password');
-            const toggleIcon = document.querySelector('.password-toggle');
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = passwordField.nextElementSibling;
             
             if (passwordField.type === 'password') {
                 passwordField.type = 'text';
@@ -356,32 +364,25 @@
             }
         }
 
-        // Form submission with loading state
+        // Form validation
         document.getElementById('loginForm').addEventListener('submit', function(e) {
-            // Remove this preventDefault for actual Django form submission
-            // e.preventDefault();
-            
             const container = document.querySelector('.login-container');
             const button = document.querySelector('.login-btn');
             
             container.classList.add('loading');
             button.textContent = 'Signing In...';
-            
-            // For demo purposes - remove this timeout for real implementation
-            setTimeout(() => {
-                container.classList.remove('loading');
-                button.textContent = 'Sign In';
-            }, 2000);
         });
 
-        // Enhanced form validation
+        // Real-time validation
         const inputs = document.querySelectorAll('input[required]');
         inputs.forEach(input => {
             input.addEventListener('blur', function() {
                 if (this.value.trim() === '') {
-                    this.style.borderColor = '#e74c3c';
+                    this.classList.add('error');
+                    this.classList.remove('success');
                 } else {
-                    this.style.borderColor = '#4CAF50';
+                    this.classList.remove('error');
+                    this.classList.add('success');
                 }
             });
         });

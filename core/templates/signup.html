@@ -352,69 +352,84 @@
             <p>Join thousands managing their finances</p>
         </div>
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <form method="post" id="signupForm">
             {% csrf_token %}
             
             <div class="form-row">
                 <div class="form-group">
-                    <label for="first_name">First Name</label>
-                    <input type="text" id="first_name" name="first_name" required>
-                    <div class="field-error" id="first_name_error"></div>
+                    <label for="id_first_name">First Name</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="field-error">{{ form.first_name.errors.0 }}</div>
+                    {% endif %}
                 </div>
                 <div class="form-group">
-                    <label for="last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" required>
-                    <div class="field-error" id="last_name_error"></div>
+                    <label for="id_last_name">Last Name</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="field-error">{{ form.last_name.errors.0 }}</div>
+                    {% endif %}
                 </div>
             </div>
 
             <div class="form-group full-width">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required>
-                <div class="field-error" id="email_error"></div>
+                <label for="id_email">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="field-error">{{ form.email.errors.0 }}</div>
+                {% endif %}
                 <div class="field-success" id="email_success">✓ Valid email address</div>
             </div>
 
             <div class="form-group full-width">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required minlength="3">
-                <div class="field-error" id="username_error"></div>
+                <label for="id_username">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-error">{{ form.username.errors.0 }}</div>
+                {% endif %}
                 <div class="field-success" id="username_success">✓ Username available</div>
             </div>
 
             <div class="form-group full-width">
-                <label for="password1">Password</label>
+                <label for="id_password1">Password</label>
                 <div style="position: relative;">
-                    <input type="password" id="password1" name="password1" required minlength="8">
-                    <span class="password-toggle" onclick="togglePassword('password1')"></span>
+                    {{ form.password1 }}
+                    <span class="password-toggle" onclick="togglePassword('id_password1')">👁️</span>
+                </div>
+                {% if form.password1.errors %}
+                    <div class="field-error">{{ form.password1.errors.0 }}</div>
+                {% endif %}
                 <div class="password-strength">
                     <span id="strength_text">Password strength</span>
                     <div class="strength-bar">
                         <div class="strength-fill" id="strength_fill"></div>
                     </div>
                 </div>
-                <div class="field-error" id="password1_error"></div>
             </div>
 
             <div class="form-group full-width">
-                <label for="password2">Password</label>
+                <label for="id_password2">Confirm Password</label>
                 <div style="position: relative;">
-                    <input type="password" id="password2" name="password2" required minlength="8">
-                    <span class="password-toggle" onclick="togglePassword('password2')"></span>
-                <div class="field-error" id="password2_error"></div>
+                    {{ form.password2 }}
+                    <span class="password-toggle" onclick="togglePassword('id_password2')">👁️</span>
+                </div>
+                {% if form.password2.errors %}
+                    <div class="field-error">{{ form.password2.errors.0 }}</div>
+                {% endif %}
                 <div class="field-success" id="password2_success">✓ Passwords match</div>
             </div>
 
             <div class="form-group full-width">
-                <label for="monthly_income">Monthly Income (Optional)</label>
-                <select id="monthly_income" name="monthly_income">
-                    <option value="">Select income range</option>
-                    <option value="0-25000">₱0 - ₱25,000</option>
-                    <option value="25000-50000">₱25,000 - ₱50,000</option>
-                    <option value="50000-100000">₱50,000 - ₱100,000</option>
-                    <option value="100000-200000">₱100,000 - ₱200,000</option>
-                    <option value="200000+">₱200,000+</option>
-                </select>
+                <label for="id_monthly_income">Monthly Income (Optional)</label>
+                {{ form.monthly_income }}
             </div>
 
             <div class="terms-group">
@@ -426,17 +441,13 @@
 
             <button type="submit" class="signup-btn" id="submitBtn">Create Account</button>
         </form>
-        {% if form.errors %}
-            <div style="color: red;">
-                {{ form.errors }}
-            </div>
-        {% endif %}
+
         <div class="divider">
             <span>Already have an account?</span>
         </div>
 
         <div class="login-link">
-            <p><a href="login.html">Sign In Here</a></p>
+            <p><a href="{% url 'login' %}">Sign In Here</a></p>
         </div>
 
         <div class="success-animation" id="successAnimation">
@@ -447,8 +458,6 @@
     </div>
 
     <script>
-        let passwordToggles = {};
-
         function togglePassword(fieldId) {
             const passwordField = document.getElementById(fieldId);
             const toggleIcon = passwordField.nextElementSibling;
@@ -513,7 +522,7 @@
         }
 
         // Real-time validation
-        document.getElementById('email').addEventListener('input', function() {
+        document.getElementById('id_email').addEventListener('input', function() {
             const email = this.value;
             const errorDiv = document.getElementById('email_error');
             const successDiv = document.getElementById('email_success');
@@ -537,7 +546,7 @@
             checkFormValidity();
         });
 
-        document.getElementById('username').addEventListener('input', function() {
+        document.getElementById('id_username').addEventListener('input', function() {
             const username = this.value;
             const errorDiv = document.getElementById('username_error');
             const successDiv = document.getElementById('username_success');
@@ -561,26 +570,26 @@
             checkFormValidity();
         });
 
-        document.getElementById('password1').addEventListener('input', function() {
+        document.getElementById('id_password1').addEventListener('input', function() {
             const password = this.value;
             checkPasswordStrength(password);
             
             // Check if passwords match when password1 changes
-            const password2 = document.getElementById('password2').value;
+            const password2 = document.getElementById('id_password2').value;
             if (password2) {
                 validatePasswordMatch();
             }
             checkFormValidity();
         });
 
-        document.getElementById('password2').addEventListener('input', function() {
+        document.getElementById('id_password2').addEventListener('input', function() {
             validatePasswordMatch();
             checkFormValidity();
         });
 
         function validatePasswordMatch() {
-            const password1 = document.getElementById('password1').value;
-            const password2 = document.getElementById('password2').value;
+            const password1 = document.getElementById('id_password1').value;
+            const password2 = document.getElementById('id_password2').value;
             const errorDiv = document.getElementById('password2_error');
             const successDiv = document.getElementById('password2_success');
             const field = document.getElementById('password2');
