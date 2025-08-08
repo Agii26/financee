@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Financial Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .signup-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signup-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+            flex: 1;
+        }
+
+        .form-group.full-width {
+            flex: 1 1 100%;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .form-group input:valid {
+            border-color: #4CAF50;
+        }
+
+        .form-group input.invalid {
+            border-color: #e74c3c;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 43px;
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 5px;
+            background: #e1e5e9;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak { background: #e74c3c; width: 25%; }
+        .strength-fair { background: #f39c12; width: 50%; }
+        .strength-good { background: #3498db; width: 75%; }
+        .strength-strong { background: #27ae60; width: 100%; }
+
+        .field-error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .field-success {
+            color: #27ae60;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .terms-group {
+            margin-bottom: 25px;
+        }
+
+        .terms-group label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .terms-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: #667eea;
+            flex-shrink: 0;
+        }
+
+        .terms-group a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .terms-group a:hover {
+            text-decoration: underline;
+        }
+
+        .signup-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signup-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .signup-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .signup-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .signup-btn:hover::before {
+            left: 100%;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e1e5e9;
+        }
+
+        .divider span {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-link p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: #764ba2;
+        }
+
+        @media (max-width: 580px) {
+            .signup-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .logo h1 {
+                font-size: 24px;
+            }
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading .signup-btn::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        .success-animation {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-animation.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success-animation .checkmark {
+            font-size: 60px;
+            color: #27ae60;
+            margin-bottom: 20px;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="logo">
+            <h1>💰 FinanceHub</h1>
+            <p>Join thousands managing their finances</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" id="signupForm">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_first_name">First Name</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="field-error">{{ form.first_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_last_name">Last Name</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="field-error">{{ form.last_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="id_email">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="field-error">{{ form.email.errors.0 }}</div>
+                {% endif %}
+                <div class="field-success" id="email_success">✓ Valid email address</div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="id_username">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-error">{{ form.username.errors.0 }}</div>
+                {% endif %}
+                <div class="field-success" id="username_success">✓ Username available</div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="id_password1">Password</label>
+                <div style="position: relative;">
+                    {{ form.password1 }}
+                    <span class="password-toggle" onclick="togglePassword('id_password1')">👁️</span>
+                </div>
+                {% if form.password1.errors %}
+                    <div class="field-error">{{ form.password1.errors.0 }}</div>
+                {% endif %}
+                <div class="password-strength">
+                    <span id="strength_text">Password strength</span>
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strength_fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="id_password2">Confirm Password</label>
+                <div style="position: relative;">
+                    {{ form.password2 }}
+                    <span class="password-toggle" onclick="togglePassword('id_password2')">👁️</span>
+                </div>
+                {% if form.password2.errors %}
+                    <div class="field-error">{{ form.password2.errors.0 }}</div>
+                {% endif %}
+                <div class="field-success" id="password2_success">✓ Passwords match</div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="id_monthly_income">Monthly Income (Optional)</label>
+                {{ form.monthly_income }}
+            </div>
+
+            <div class="terms-group">
+                <label>
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <span>I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a></span>
+                </label>
+            </div>
+
+            <button type="submit" class="signup-btn" id="submitBtn">Create Account</button>
+        </form>
+
+        <div class="divider">
+            <span>Already have an account?</span>
+        </div>
+
+        <div class="login-link">
+            <p><a href="{% url 'login' %}">Sign In Here</a></p>
+        </div>
+
+        <div class="success-animation" id="successAnimation">
+            <div class="checkmark">✅</div>
+            <h2>Account Created Successfully!</h2>
+            <p>Welcome to FinanceHub! Please check your email to verify your account.</p>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = passwordField.nextElementSibling;
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.textContent = '🙈';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.textContent = '👁️';
+            }
+        }
+
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            let score = 0;
+            let feedback = '';
+
+            if (password.length >= 8) score += 1;
+            if (password.match(/[a-z]/)) score += 1;
+            if (password.match(/[A-Z]/)) score += 1;
+            if (password.match(/[0-9]/)) score += 1;
+            if (password.match(/[^a-zA-Z0-9]/)) score += 1;
+
+            const strengthFill = document.getElementById('strength_fill');
+            const strengthText = document.getElementById('strength_text');
+
+            switch (score) {
+                case 0:
+                case 1:
+                    strengthFill.className = 'strength-fill strength-weak';
+                    strengthText.textContent = 'Weak password';
+                    break;
+                case 2:
+                    strengthFill.className = 'strength-fill strength-fair';
+                    strengthText.textContent = 'Fair password';
+                    break;
+                case 3:
+                case 4:
+                    strengthFill.className = 'strength-fill strength-good';
+                    strengthText.textContent = 'Good password';
+                    break;
+                case 5:
+                    strengthFill.className = 'strength-fill strength-strong';
+                    strengthText.textContent = 'Strong password';
+                    break;
+            }
+            return score;
+        }
+
+        // Email validation
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Username validation (simulate checking availability)
+        function validateUsername(username) {
+            // In real app, this would be an AJAX call to check availability
+            const reservedNames = ['admin', 'root', 'user', 'test'];
+            return username.length >= 3 && !reservedNames.includes(username.toLowerCase());
+        }
+
+        // Real-time validation
+        document.getElementById('id_email').addEventListener('input', function() {
+            const email = this.value;
+            const errorDiv = document.getElementById('email_error');
+            const successDiv = document.getElementById('email_success');
+            
+            if (email && validateEmail(email)) {
+                this.classList.remove('invalid');
+                this.classList.add('valid');
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'block';
+            } else if (email) {
+                this.classList.add('invalid');
+                this.classList.remove('valid');
+                errorDiv.textContent = 'Please enter a valid email address';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } else {
+                this.classList.remove('invalid', 'valid');
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+            checkFormValidity();
+        });
+
+        document.getElementById('id_username').addEventListener('input', function() {
+            const username = this.value;
+            const errorDiv = document.getElementById('username_error');
+            const successDiv = document.getElementById('username_success');
+            
+            if (username && validateUsername(username)) {
+                this.classList.remove('invalid');
+                this.classList.add('valid');
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'block';
+            } else if (username) {
+                this.classList.add('invalid');
+                this.classList.remove('valid');
+                errorDiv.textContent = username.length < 3 ? 'Username must be at least 3 characters' : 'Username not available';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } else {
+                this.classList.remove('invalid', 'valid');
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+            checkFormValidity();
+        });
+
+        document.getElementById('id_password1').addEventListener('input', function() {
+            const password = this.value;
+            checkPasswordStrength(password);
+            
+            // Check if passwords match when password1 changes
+            const password2 = document.getElementById('id_password2').value;
+            if (password2) {
+                validatePasswordMatch();
+            }
+            checkFormValidity();
+        });
+
+        document.getElementById('id_password2').addEventListener('input', function() {
+            validatePasswordMatch();
+            checkFormValidity();
+        });
+
+        function validatePasswordMatch() {
+            const password1 = document.getElementById('id_password1').value;
+            const password2 = document.getElementById('id_password2').value;
+            const errorDiv = document.getElementById('password2_error');
+            const successDiv = document.getElementById('password2_success');
+            const field = document.getElementById('password2');
+            
+            if (password2 && password1 === password2) {
+                field.classList.remove('invalid');
+                field.classList.add('valid');
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'block';
+            } else if (password2) {
+                field.classList.add('invalid');
+                field.classList.remove('valid');
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } else {
+                field.classList.remove('invalid', 'valid');
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+        }
+
+        function checkFormValidity() {
+            const requiredFields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2'];
+            const terms = document.getElementById('terms');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            let isValid = true;
+            
+            // Check all required fields
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    isValid = false;
+                }
+            });
+            
+            // Check specific validations
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password1 = document.getElementById('password1').value;
+            const password2 = document.getElementById('password2').value;
+            
+            if (!validateEmail(email) || !validateUsername(username) || 
+                password1 !== password2 || password1.length < 8 || !terms.checked) {
+                isValid = false;
+            }
+            
+            
+        }
+
+        // Terms checkbox validation
+        document.getElementById('terms').addEventListener('change', function() {
+            checkFormValidity();
+        });
+
+        // Form submission
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            // Remove this preventDefault for actual Django form submission
+            
+            
+            const container = document.querySelector('.signup-container');
+            const form = this;
+            const successAnimation = document.getElementById('successAnimation');
+            
+            container.classList.add('loading');
+            
+            // Simulate form submission (remove for real implementation)
+            setTimeout(() => {
+                form.style.display = 'none';
+                successAnimation.classList.add('show');
+                container.classList.remove('loading');
+                
+                // Redirect after success (add actual redirect URL)
+                setTimeout(() => {
+                    // window.location.href = '/login/';
+                    console.log('Would redirect to login page');
+                }, 3000);
+            }, 2000);
+        });
+
+        // Initialize form validation
+        checkFormValidity();
