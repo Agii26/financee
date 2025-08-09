@@ -1,0 +1,407 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Login - FinanceHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100 py-5">
+        <div class="col-lg-5 col-md-7">
+            <div class="card login-card">
+                <div class="card-body p-5">
+                    <!-- Logo/Header -->
+                    <div class="text-center mb-5">
+                        <div class="login-logo mb-3">
+                            <i class="fas fa-wallet fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="fw-bold mb-2">Welcome Back!</h2>
+                        <p class="text-muted">Sign in to continue to FinanceHub</p>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form method="post" class="login-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-floating mb-3">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   placeholder="Username or Email"
+                                   required>
+                            <label for="username">
+                                <i class="fas fa-user me-2"></i>Username or Email
+                            </label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Password"
+                                   required>
+                            <label for="password">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <button type="button" 
+                                    class="btn btn-link password-toggle" 
+                                    onclick="togglePassword('password')">
+                                <i class="fas fa-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" 
+                                       class="form-check-input" 
+                                       id="remember" 
+                                       name="remember">
+                                <label class="form-check-label text-muted" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+                            <a href="#" class="text-decoration-none">
+                                Forgot Password?
+                            </a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Sign In
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="divider my-4">
+                        <span class="divider-text">New to FinanceHub?</span>
+                    </div>
+
+                    <!-- Register Link -->
+                    <div class="text-center">
+                        <a href="{% url 'core:register' %}" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Create Account
+                        </a>
+                    </div>
+
+                    <!-- Features Preview -->
+                    <div class="features-preview mt-4">
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div class="feature-mini">
+                                    <i class="fas fa-chart-pie text-primary"></i>
+                                    <small class="d-block text-muted">Expense Tracking</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="feature-mini">
+                                    <i class="fas fa-piggy-bank text-success"></i>
+                                    <small class="d-block text-muted">Savings Goals</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="feature-mini">
+                                    <i class="fas fa-chart-bar text-warning"></i>
+                                    <small class="d-block text-muted">Budget Control</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Your financial data is protected with bank-level security
+                </small>
+            </div>
+        </div>
+
+        <!-- Side Image/Info (Hidden on mobile) -->
+        <div class="col-lg-6 d-none d-lg-block">
+            <div class="login-side-content ms-5">
+                <div class="side-card p-5">
+                    <h3 class="fw-bold mb-4">Smart Money Management</h3>
+                    <div class="benefits-list">
+                        <div class="benefit-item d-flex align-items-center mb-3">
+                            <div class="benefit-icon me-3">
+                                <i class="fas fa-peso-sign"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Track Daily Expenses</h6>
+                                <small class="text-muted">Monitor every peso you spend</small>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item d-flex align-items-center mb-3">
+                            <div class="benefit-icon me-3">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Weekly & Monthly Budgets</h6>
+                                <small class="text-muted">Set limits and stay on track</small>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item d-flex align-items-center mb-3">
+                            <div class="benefit-icon me-3">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Beautiful Analytics</h6>
+                                <small class="text-muted">Visualize your financial progress</small>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item d-flex align-items-center">
+                            <div class="benefit-icon me-3">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Mobile Friendly</h6>
+                                <small class="text-muted">Access anywhere, anytime</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Preview -->
+                    <div class="stats-preview mt-5">
+                        <h5 class="mb-3">Join Our Community</h5>
+                        <div class="row g-3 text-center">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <h4 class="text-primary mb-1">10K+</h4>
+                                    <small class="text-muted">Active Users</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <h4 class="text-success mb-1">₱1M+</h4>
+                                    <small class="text-muted">Money Tracked</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-card {
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    background: var(--card-bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-violet), var(--secondary-violet));
+}
+
+.form-floating > .form-control {
+    background: rgba(111, 66, 193, 0.05);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-light);
+    padding-left: 3rem;
+}
+
+.form-floating > .form-control:focus {
+    background: rgba(111, 66, 193, 0.1);
+    border-color: var(--primary-violet);
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+.form-floating > label {
+    color: var(--text-muted);
+    padding-left: 3rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: var(--primary-violet);
+    padding-left: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--primary-violet);
+}
+
+.divider {
+    position: relative;
+    text-align: center;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.divider-text {
+    background: var(--card-bg);
+    padding: 0 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.feature-mini {
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.feature-mini:hover {
+    background: rgba(111, 66, 193, 0.1);
+}
+
+.feature-mini i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.login-side-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.side-card {
+    background: rgba(111, 66, 193, 0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(111, 66, 193, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.benefit-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-violet), var(--secondary-violet));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.stats-preview {
+    border-top: 1px solid var(--border-color);
+    padding-top: 2rem;
+}
+
+.stat-item {
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(111, 66, 193, 0.05);
+}
+
+/* Loading state */
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Form validation styles */
+.form-control:invalid {
+    border-color: var(--danger);
+}
+
+.form-control:valid {
+    border-color: var(--success);
+}
+
+/* Animation for form submission */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-submitting {
+    animation: pulse 1s infinite;
+}
+</style>
+
+<script>
+function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const passwordIcon = document.getElementById('passwordIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        passwordIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        passwordIcon.className = 'fas fa-eye';
+    }
+}
+
+// Form submission with loading state
+document.querySelector('.login-form').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+    submitBtn.classList.add('btn-submitting');
+    
+    // Re-enable button after 3 seconds if form submission fails
+    setTimeout(() => {
+        if (submitBtn.disabled) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            submitBtn.classList.remove('btn-submitting');
+        }
+    }, 3000);
+});
+
+// Real-time form validation
+document.querySelectorAll('input[required]').forEach(input => {
+    input.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        }
+    });
+});
+
+// Auto-focus first input
+document.addEventListener('DOMContentLoaded', function() {
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+});
+</script>
+{% endblock %}
