@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -39,10 +40,12 @@ def login_view(request):
 
 def register(request):
     """User registration view"""
+
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
+
             monthly_income = form.cleaned_data.get('monthly_income', 0)
             money_on_hand = form.cleaned_data.get('money_on_hand', 0)
             
@@ -90,6 +93,7 @@ def register(request):
 @login_required
 def dashboard(request):
     """Main dashboard view with comprehensive financial overview"""
+
     try:
         profile = request.user.profile
     except Profile.DoesNotExist:
@@ -256,3 +260,4 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('core:home')
+

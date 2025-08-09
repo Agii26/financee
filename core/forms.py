@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+
 from .models import Profile, Category, Budget, Transaction, Savings
 from decimal import Decimal
+
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(
@@ -45,12 +47,14 @@ class SignUpForm(UserCreationForm):
             'placeholder': 'Current Money on Hand (₱)',
             'step': '0.01'
         })
+
     )
 
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
         widgets = {
+
             'username': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Username'
@@ -73,6 +77,7 @@ class SignUpForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('This email address is already registered.')
         return email
+
 
 class ProfileForm(forms.ModelForm):
     class Meta:
@@ -230,4 +235,11 @@ class QuickTransactionForm(forms.Form):
             'placeholder': 'What did you spend on?'
         })
     )
+
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('This username is already taken.')
+        return username
 

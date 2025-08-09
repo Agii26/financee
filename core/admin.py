@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Profile, Category, Budget, Transaction, Savings
 
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'monthly_income', 'money_on_hand', 'created_at']
@@ -36,3 +37,4 @@ class SavingsAdmin(admin.ModelAdmin):
     list_filter = ['date', 'created_at']
     search_fields = ['description', 'user__username']
     date_hierarchy = 'date'
+
