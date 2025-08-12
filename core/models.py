@@ -17,6 +17,8 @@ class Profile(models.Model):
 class Category(models.Model):
     CATEGORY_CHOICES = [
         ('bills', 'Bills'),
+        ('wants', 'Wants'),
+        ('needs', 'Needs'),
         ('grocery', 'Grocery'),
         ('school', 'School/Education'),
         ('allowance', 'Daily Allowance'),

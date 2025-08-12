@@ -16,8 +16,9 @@
             --dark-bg: #1a1a1a;
             --darker-bg: #0f0f0f;
             --card-bg: #2d2d2d;
-            --text-light: #f8f9fa;
-            --text-muted: #adb5bd;
+            /* Increased contrast for better readability */
+            --text-light: #ffffff;
+            --text-muted: #d0d6e0;
             --success: #28a745;
             --warning: #ffc107;
             --danger: #dc3545;
@@ -139,6 +140,12 @@
             padding: 0.75rem 1rem;
         }
 
+        /* Improve placeholder readability */
+        .form-control::placeholder, .form-select::placeholder {
+            color: var(--text-muted);
+            opacity: 1;
+        }
+
         .form-control:focus, .form-select:focus {
             background: var(--card-bg);
             border-color: var(--primary-violet);
@@ -216,6 +223,7 @@
         .table-dark th {
             background: var(--primary-violet);
             font-weight: 600;
+            color: #ffffff;
         }
 
         /* Footer */
@@ -259,6 +267,9 @@
             content: '₱';
             margin-right: 2px;
         }
+
+        /* Ensure any .text-muted is still readable on dark backgrounds */
+        .text-muted { color: var(--text-muted) !important; }
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
@@ -312,6 +323,16 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'core:dashboard' %}">
                                 <i class="fas fa-chart-line me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:weekly_report' %}">
+                                <i class="fas fa-calendar-week me-1"></i>Weekly Report
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:monthly_report' %}">
+                                <i class="fas fa-calendar-alt me-1"></i>Monthly Report
                             </a>
                         </li>
                         <li class="nav-item dropdown">

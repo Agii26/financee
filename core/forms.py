@@ -206,11 +206,9 @@ class SavingsForm(forms.ModelForm):
 class QuickTransactionForm(forms.Form):
     """Quick form for adding common transactions"""
     QUICK_CATEGORIES = [
-        ('allowance', 'Daily Allowance'),
-        ('food', 'Food'),
-        ('transportation', 'Transportation'),
-        ('load', 'Mobile Load'),
-        ('other', 'Other'),
+        ('bills', 'Bills'),
+        ('wants', 'Wants'),
+        ('needs', 'Needs'),
     ]
     
     amount = forms.DecimalField(
@@ -243,3 +241,46 @@ class QuickTransactionForm(forms.Form):
             raise forms.ValidationError('This username is already taken.')
         return username
 
+
+class WeekFilterForm(forms.Form):
+    """Filter data by week using a start date picker."""
+    week_start = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+
+
+class MonthFilterForm(forms.Form):
+    """Filter data by month and year."""
+    MONTH_CHOICES = [(i, f"{i:02}") for i in range(1, 13)]
+    month = forms.ChoiceField(
+        choices=MONTH_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    year = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 2000, 'step': 1})
+    )
+
+
+class AddCashOnHandForm(forms.Form):
+    amount = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': '₱0.00',
+            'step': '0.01'
+        })
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Description (optional)'
+        })
+    )
