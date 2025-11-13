@@ -1,4 +1,6 @@
 
+import profile
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -10,11 +12,11 @@ from datetime import datetime, timedelta, date
 from decimal import Decimal
 import json
 
-from .models import Profile, Category, Budget, Transaction, Savings
+from .models import Profile, Category, Budget, Transaction, Savings, WeeklySavings, WeeklyAllowance
 from .forms import (
     SignUpForm, ProfileForm, CategoryForm, BudgetForm,
     TransactionForm, SavingsForm, QuickTransactionForm,
-    WeekFilterForm, MonthFilterForm, AddCashOnHandForm
+    WeekFilterForm, MonthFilterForm, AddCashOnHandForm, WeeklyAllowance, WeeklySavings, WeeklyAllowanceForm, WeeklySavingsForm, AllowanceForm
 )
 
 def home(request):
@@ -108,6 +110,8 @@ def dashboard(request):
     current_month = today.month
     current_year = today.year
     
+    
+
     # Calculate date ranges
     month_start = date(current_year, current_month, 1)
     if current_month == 12:
@@ -125,7 +129,35 @@ def dashboard(request):
         user=request.user,
         date__range=[month_start, month_end]
     )
+
+    income_exists = Transaction.objects.filter(
+        user=request.user,
+        transaction_type='income',
+        title='monthly income',
+        date__year=today.year,
+        date__month=today.month
+    ).exists()
+
+    if not income_exists and profile.monthly_income:
+        income_cat, _ = Category.objects.get_or_create(
+            user=request.user,
+            category_type='income',
+            defaults={'name': 'monthly income', 'color': "#28a745"}
+        )
+        Transaction.objects.create(
+            user=request.user,
+            title="Monthly Income",
+            description="Auto-added monthly income",
+            amount=profile.monthly_income,
+            transaction_type='income',
+            category=income_cat,
+            date=today,
+        )
+
+        
     
+
+
     # Calculate totals
     monthly_income = monthly_transactions.filter(transaction_type='income').aggregate(
         total=Sum('amount'))['total'] or 0
@@ -178,6 +210,9 @@ def dashboard(request):
     # Quick transaction form
     quick_form = QuickTransactionForm()
     add_cash_form = AddCashOnHandForm()
+    add_allowance_form = WeeklyAllowanceForm()
+    add_savings_form = SavingsForm()
+
     
     # Prepare chart data
     chart_data = {
@@ -201,10 +236,18 @@ def dashboard(request):
             'amount': float(month_expenses)
         })
     monthly_trend.reverse()
+
+
     
+    profile.money_on_hand += profile.monthly_income
+    profile.save()
+
+    
+    total_cash_on_hand = profile.money_on_hand
     context = {
         'profile': profile,
         'monthly_income': monthly_income,
+        'total_cash_on_hand': total_cash_on_hand,
         'monthly_expenses': monthly_expenses,
         'monthly_savings': monthly_savings,
         'weekly_expenses': weekly_expenses,
@@ -215,9 +258,14 @@ def dashboard(request):
         'budget_overview': budget_overview,
         'quick_form': quick_form,
         'add_cash_form': add_cash_form,
+        'add_savings_form': add_savings_form,
+        'add_allowance_form': add_allowance_form,
         'chart_data': json.dumps(chart_data),
         'monthly_trend': json.dumps(monthly_trend),
         'current_month': today.strftime('%B %Y'),
+
+        
+        
     }
     
     return render(request, 'core/dashboard.html', context)
@@ -251,10 +299,14 @@ def quick_expense(request):
             )
             
             # Update money on hand
+            
             profile = request.user.profile
             profile.money_on_hand -= amount
             profile.save()
+
             
+            
+
             return JsonResponse({'success': True, 'message': 'Expense added successfully!'})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
@@ -275,6 +327,7 @@ def weekly_report(request):
 
     # Data
     weekly_transactions = Transaction.objects.filter(user=request.user, date__range=[week_start, week_end])
+    weekly_recent_transactions = weekly_transactions[:10]
     weekly_allowance = weekly_transactions.filter(category__category_type='allowance').aggregate(total=Sum('amount'))['total'] or 0
     weekly_savings = Savings.objects.filter(user=request.user, date__range=[week_start, week_end]).aggregate(total=Sum('amount'))['total'] or 0
     weekly_expenses_by_category = (
@@ -285,16 +338,30 @@ def weekly_report(request):
     )
 
     # Weekly budget (Cash on Hand for the week)
-    weekly_budget = Budget.objects.filter(user=request.user, budget_type='weekly', start_date=week_start).first()
-    weekly_expense_total = weekly_transactions.filter(transaction_type='expense').aggregate(total=Sum('amount'))['total'] or 0
-    weekly_budget_spent = weekly_budget.spent_amount() if weekly_budget else weekly_expense_total
+    # Always compute spent as ALL outflows (expenses + savings) for the week,
+    # regardless of any category set on the Budget. This ensures the "Cash on Hand"
+    # reflects the total outflow, matching the UI expectation.
+    weekly_budget = Budget.objects.filter(
+        user=request.user, budget_type='weekly', start_date=week_start
+    ).first()
+    weekly_expense_total = (
+        weekly_transactions
+        .filter(transaction_type__in=['expense', 'savings'])
+        .aggregate(total=Sum('amount'))['total'] or 0
+    )
+    weekly_budget_spent = weekly_expense_total
     weekly_budget_amount = weekly_budget.amount if weekly_budget else Decimal('0')
-    weekly_budget_remaining = (weekly_budget_amount - weekly_budget_spent) if weekly_budget else Decimal('0')
+    weekly_budget_remaining = weekly_budget_amount - Decimal(weekly_budget_spent)
     weekly_budget_percentage = float((weekly_budget_spent / weekly_budget_amount * 100) if weekly_budget_amount > 0 else 0)
     if weekly_budget_percentage > 100:
         weekly_budget_percentage = 100
 
+    
     add_cash_form = AddCashOnHandForm()
+    add_allowance_form = WeeklyAllowanceForm()
+    add_savings_form = SavingsForm()
+
+    
 
     context = {
         'form': form,
@@ -308,7 +375,12 @@ def weekly_report(request):
         'weekly_budget_spent': weekly_budget_spent,
         'weekly_budget_remaining': weekly_budget_remaining,
         'add_cash_form': add_cash_form,
+        'add_allowance_form': add_allowance_form,
+        'add_savings_form': add_savings_form,
         'weekly_budget_percentage': weekly_budget_percentage,
+        'weekly_recent_transactions': weekly_recent_transactions,
+        # Add overall cash on hand for display
+        'money_on_hand': Profile.objects.get(user=request.user).money_on_hand if Profile.objects.filter(user=request.user).exists() else 0,
     }
     return render(request, 'core/weekly_report.html', context)
 
@@ -341,16 +413,28 @@ def monthly_report(request):
     monthly_bills = []
 
     # Monthly budget (Cash on Hand for the month)
-    monthly_budget = Budget.objects.filter(user=request.user, budget_type='monthly', start_date=month_start).first()
-    monthly_expense_total = monthly_transactions.filter(transaction_type='expense').aggregate(total=Sum('amount'))['total'] or 0
-    monthly_budget_spent = monthly_budget.spent_amount() if monthly_budget else monthly_expense_total
+    # Always compute spent as ALL outflows (expenses + savings) for the month,
+    # ignoring any category that might be set on the Budget.
+    monthly_budget = Budget.objects.filter(
+        user=request.user, budget_type='monthly', start_date=month_start
+    ).first()
+    monthly_expense_total = (
+        monthly_transactions
+        .filter(transaction_type__in=['expense', 'savings'])
+        .aggregate(total=Sum('amount'))['total'] or 0
+    )
+    monthly_budget_spent = monthly_expense_total
     monthly_budget_amount = monthly_budget.amount if monthly_budget else Decimal('0')
-    monthly_budget_remaining = (monthly_budget_amount - monthly_budget_spent) if monthly_budget else Decimal('0')
+    monthly_budget_remaining = monthly_budget_amount - Decimal(monthly_budget_spent)
     monthly_budget_percentage = float((monthly_budget_spent / monthly_budget_amount * 100) if monthly_budget_amount > 0 else 0)
     if monthly_budget_percentage > 100:
         monthly_budget_percentage = 100
 
     add_cash_form = AddCashOnHandForm()
+    add_weekly_allowance = WeeklyAllowanceForm()
+    add_weekly_savings = SavingsForm()
+
+
 
     context = {
         'form': form,
@@ -367,35 +451,39 @@ def monthly_report(request):
         'month_end': month_end,
         'add_cash_form': add_cash_form,
         'monthly_budget_percentage': monthly_budget_percentage,
+        'add_weekly_allowance': add_weekly_allowance,
+        'add weekly_savings': add_weekly_savings,
     }
     return render(request, 'core/monthly_report.html', context)
 
-
 @login_required
 def add_cash_on_hand(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = AddCashOnHandForm(request.POST)
         if form.is_valid():
             amount = form.cleaned_data['amount']
-            description = form.cleaned_data.get('description')
-            profile, _ = Profile.objects.get_or_create(user=request.user)
+            profile, created = Profile.objects.get_or_create(user=request.user)
             profile.money_on_hand += amount
             profile.save()
-            # Optionally log as a transaction of type income with 'Other' category if available
-            other_category = Category.objects.filter(user=request.user, category_type='other').first()
-            if other_category:
-                Transaction.objects.create(
-                    user=request.user,
-                    title=description or 'Cash top-up',
-                    description=description or 'Added cash on hand',
-                    amount=amount,
-                    transaction_type='income',
-                    category=other_category,
-                    date=timezone.now().date(),
-                )
-            messages.success(request, 'Cash on hand updated successfully.')
+
+            # Determine the current week start (Monday)
+            today = timezone.now().date()
+            week_start = today - timedelta(days=today.weekday())
+
+            # Update or create WeeklyCashOnHand for the week
+            weekly_record, _ = WeeklyCashOnHand.objects.get_or_create(
+                user=request.user,
+                week_start=week_start,
+                defaults={'amount': 0}
+            )
+            weekly_record.amount += amount
+            weekly_record.save()
+
+            messages.success(request, "Cash added successfully.")
             return redirect('core:dashboard')
-    return redirect('core:dashboard')
+    else:
+        form = AddCashOnHandForm()
+    return render(request, 'core/dashboard.html', {'form': form})
 
 
 @login_required
@@ -415,7 +503,8 @@ def add_weekly_budget(request):
                 user=request.user,
                 budget_type='weekly',
                 start_date=week_start,
-                defaults={'name': 'Weekly Budget', 'amount': amount, 'is_active': True}
+                # Explicitly clear category to ensure weekly cash-on-hand covers ALL categories
+                defaults={'name': 'Weekly Budget', 'amount': amount, 'is_active': True, 'category': None}
             )
             messages.success(request, 'Weekly cash on hand (budget) set successfully.')
             return redirect('core:weekly_report')
@@ -441,7 +530,8 @@ def add_monthly_budget(request):
                 user=request.user,
                 budget_type='monthly',
                 start_date=month_start,
-                defaults={'name': 'Monthly Budget', 'amount': amount, 'is_active': True}
+                # Explicitly clear category to ensure monthly cash-on-hand covers ALL categories
+                defaults={'name': 'Monthly Budget', 'amount': amount, 'is_active': True, 'category': None}
             )
             messages.success(request, 'Monthly cash on hand (budget) set successfully.')
             return redirect('core:monthly_report')
@@ -453,4 +543,125 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('core:home')
+
+@login_required
+def add_savings(request):
+    """
+    Create a savings entry and ensure a corresponding 'savings' Transaction exists.
+
+    Args:
+        request: Django HttpRequest with POST keys: 'amount', 'description' (optional), 'date'.
+
+    Returns:
+        HttpResponseRedirect back to Weekly Report.
+
+    Side effects:
+        - Creates a Savings row for the user.
+        - Decrements Profile.money_on_hand by the saved amount.
+        - Ensures a 'savings' Category exists (creates if needed).
+        - Creates a Transaction of type 'savings' so budgets count it.
+    """
+    if request.method == 'POST':
+        form = SavingsForm(request.POST)
+        if form.is_valid():
+            # Extract validated data
+            amount = form.cleaned_data['amount']
+            description = form.cleaned_data.get('description', '')
+            date_val = form.cleaned_data['date']
+
+            # 1) Persist savings record
+            Savings.objects.create(
+                user=request.user,
+                amount=amount,
+                description=description,
+                date=date_val,
+            )
+
+            # 2) Adjust money on hand
+            profile, _ = Profile.objects.get_or_create(user=request.user)
+            profile.money_on_hand -= amount
+            profile.save()
+
+            # 3) Ensure a 'savings' category exists, then create a matching Transaction
+            #    Using get_or_create guarantees budgets will see this as outflow.
+            savings_cat, _ = Category.objects.get_or_create(
+                user=request.user,
+                category_type='savings',
+                defaults={
+                    'name': 'Savings',        # keep UI-consistent name
+                    'color': '#6f42c1',       # violet default
+                },
+            )
+
+            Transaction.objects.create(
+                user=request.user,
+                title=description or 'Savings',
+                description=description,
+                amount=amount,
+                transaction_type='savings',
+                category=savings_cat,
+                date=date_val,
+            )
+
+            messages.success(request, 'Savings added successfully.')
+            return redirect('core:weekly_report')
+
+    return redirect('core:weekly_report')
+
+@login_required
+def add_weekly_allowance(request):
+    if request.method == "POST":
+        form = WeeklyAllowanceForm(request.POST)
+        if form.is_valid():
+            # Save WeeklyAllowance entry
+            allowance = form.save(commit=False)
+            allowance.user = request.user
+            allowance.save()
+
+            # Ensure category exists
+            allowance_cat, _ = Category.objects.get_or_create(
+                user=request.user,
+                category_type="allowance",
+                defaults={"name": "Allowance", "color": "#28a745"},
+            )
+
+            # Use week_start as the transaction date
+            tx_date = allowance.week_start
+
+            # Create Transaction
+            Transaction.objects.create(
+                user=request.user,
+                title="Weekly Allowance",
+                description=f"Allowance for week starting {allowance.week_start}",
+                amount=allowance.amount,
+                transaction_type="income",
+                category=allowance_cat,
+                date=tx_date,
+            )
+
+            # Update profile
+            profile, _ = Profile.objects.get_or_create(user=request.user)
+            profile.money_on_hand += allowance.amount
+            profile.save()
+
+            messages.success(request, "Allowance added successfully.")
+        else:
+            messages.error(request, f"Allowance form error: {form.errors}")
+
+    return redirect("core:weekly_report")
+
+
+
+
+@login_required
+def add_weekly_savings(request):
+    if request.method =="POST":
+        form = WeeklySavingsForm(request.POST)
+        if form.is_valid():
+            savings = form.save(commit=False)
+            savings.user = request.user
+            savings.week_start = request.POST.get("week_start", timezone.now().date)
+            savings.save()
+        return redirect('core:weekly_report')
+
 

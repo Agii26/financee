@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container-fluid py-4">
   <div class="row mb-3">
-    <div class="col-lg-8">
+    <div class="col-lg-6">
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Weekly Report</h5>
@@ -24,7 +24,26 @@
         </div>
       </div>
     </div>
+
+    <div class="col-lg-6">
+      <div class="card stat-card h-100">
+        <div class="card-body">
+          <h6 class="stat-label mb-1">Top Expense Category</h6>
+          {% if weekly_expenses_by_category %}
+            <div class="d-flex align-items-center">
+              <span class="badge me-2" style="background: {{ weekly_expenses_by_category.0.category__color }}">&nbsp;</span>
+              <div class="stat-value text-danger">{{ weekly_expenses_by_category.0.category__name }}</div>
+            </div>
+            <small class="text-muted">₱{{ weekly_expenses_by_category.0.total|floatformat:2 }}</small>
+          {% else %}
+            <small class="text-muted">No expenses recorded</small>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </div>
+
+  
 
   <div class="row g-3 mb-3">
     <div class="col-lg-4">
@@ -58,6 +77,9 @@
       <div class="card stat-card h-100">
         <div class="card-body">
           <h6 class="stat-label mb-1">Weekly Allowance</h6>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addWeeklyAllowanceModal">
+              <i class="fas fa-plus me-1"></i>Add weekly allowance
+            </button>
           <div class="stat-value">₱{{ weekly_allowance|floatformat:2 }}</div>
           <small class="text-muted">Received this week</small>
         </div>
@@ -67,27 +89,15 @@
       <div class="card stat-card h-100">
         <div class="card-body">
           <h6 class="stat-label mb-1">Weekly Savings</h6>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addWeeklySavingsModal">
+            <i class="fas fa-plus me-1"></i>Add weekly savings
+          </button>
           <div class="stat-value text-info">₱{{ weekly_savings|floatformat:2 }}</div>
           <small class="text-muted">Saved this week</small>
         </div>
       </div>
     </div>
-    <div class="col-lg-4">
-      <div class="card stat-card h-100">
-        <div class="card-body">
-          <h6 class="stat-label mb-1">Top Expense Category</h6>
-          {% if weekly_expenses_by_category %}
-            <div class="d-flex align-items-center">
-              <span class="badge me-2" style="background: {{ weekly_expenses_by_category.0.category__color }}">&nbsp;</span>
-              <div class="stat-value text-danger">{{ weekly_expenses_by_category.0.category__name }}</div>
-            </div>
-            <small class="text-muted">₱{{ weekly_expenses_by_category.0.total|floatformat:2 }}</small>
-          {% else %}
-            <small class="text-muted">No expenses recorded</small>
-          {% endif %}
-        </div>
-      </div>
-    </div>
+    
   </div>
 
   <div class="row">
@@ -129,6 +139,9 @@
 
 {% block extra_js %}
 <!-- Add Weekly Budget Modal -->
+
+
+<!-- Add Weekly Budget Modal -->
 <div class="modal fade" id="addWeeklyBudgetModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content" style="background: var(--card-bg); border: 2px solid var(--primary-violet);">
@@ -153,7 +166,59 @@
     </div>
   </div>
 </div>
-{% endblock %}
 
+<!-- Add Weekly Allowance Modal -->
+<div class="modal fade" id="addWeeklyAllowanceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background: var(--card-bg); border: 2px solid var(--primary-violet);">
+      <div class="modal-header" style="border-bottom-color: var(--border-color);">
+        <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2 text-primary"></i>Add Weekly Allowance</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'core:add_weekly_allowance' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="week_start" value="{{ week_start|date:'Y-m-d' }}">
+          <div class="mb-3">
+            <label class="form-label">Amount</label>
+            {{ add_allowance_form.amount }}
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top-color: var(--border-color);">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <!-- Add Weekly Savings Modal -->
+  <div class="modal fade" id="addWeeklySavingsModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content" style="background: var(--card-bg); border: 2px solid var(--primary-violet);">
+        <div class="modal-header" style="border-bottom-color: var(--border-color);">
+          <h5 class="modal-title"><i class="fas fa-piggy-bank me-2 text-info"></i>Add Weekly Savings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="post" action="{% url 'core:add_weekly_savings' %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            
+            <input type="hidden" name="week_start" value="{{ week_start|date:'Y-m-d' }}">
+            <div class="mb-3">
+              <label class="form-label">Amount</label>
+              {{ add_savings_form.amount }}
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top-color: var(--border-color);">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
 
 

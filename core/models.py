@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
 from django.utils import timezone
-from decimal import Decimal
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -31,11 +29,10 @@ class Category(models.Model):
         ('savings', 'Savings'),
         ('other', 'Other'),
     ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     category_type = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
-    color = models.CharField(max_length=7, default='#6f42c1')  # Violet default
+    color = models.CharField(max_length=7, default='#6f42c1')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -50,7 +47,6 @@ class Budget(models.Model):
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
     ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -64,9 +60,7 @@ class Budget(models.Model):
         return f"{self.user.username} - {self.name} (₱{self.amount})"
 
     def spent_amount(self):
-        """Calculate total spent for this budget period"""
         if self.budget_type == 'weekly':
-            # Calculate spent in current week
             from datetime import timedelta
             week_start = self.start_date
             week_end = week_start + timedelta(days=7)
@@ -76,18 +70,14 @@ class Budget(models.Model):
                 transaction_type='expense'
             )
         else:
-            # Calculate spent in current month
-            from django.db.models import Q
             transactions = Transaction.objects.filter(
                 user=self.user,
                 date__year=self.start_date.year,
                 date__month=self.start_date.month,
                 transaction_type='expense'
             )
-        
         if self.category:
             transactions = transactions.filter(category=self.category)
-        
         return sum(t.amount for t in transactions)
 
     def remaining_amount(self):
@@ -99,7 +89,6 @@ class Transaction(models.Model):
         ('expense', 'Expense'),
         ('savings', 'Savings'),
     ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -129,3 +118,44 @@ class Savings(models.Model):
     def __str__(self):
         return f"{self.user.username} - ₱{self.amount} on {self.date}"
 
+
+class WeeklyAllowance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    week_start = models.DateField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - Allowance {self.amount} ({self.week_start})"
+
+class WeeklySavings(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    week_start = models.DateField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - Savings {self.amount} ({self.week_start})"
+
+class Allowance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="allowances")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date_given = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.amount}"
+
+class WeeklyCashOnHand(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    week_start = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'week_start')
+        ordering = ['-week_start']
+
+    def __str__(self):
+        return f"{self.user.username} - ₱{self.amount} (Week of {self.week_start})"
+
+        

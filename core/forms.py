@@ -1,8 +1,10 @@
+from dataclasses import fields
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.forms import Widget, widgets
 
-from .models import Profile, Category, Budget, Transaction, Savings
+from .models import Profile, Category, Budget, Transaction, Savings, WeeklyAllowance, WeeklySavings, Allowance
 from decimal import Decimal
 
 
@@ -274,6 +276,50 @@ class AddCashOnHandForm(forms.Form):
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'placeholder': '₱0.00',
+            'step': '0.01'
+        })
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Description (optional)'
+        })
+    )
+
+class WeeklyAllowanceForm(forms.ModelForm):
+    class Meta:
+        model = WeeklyAllowance
+        fields = ["amount"]
+        widgets = {
+            "amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "placeholder": "₱0.00",
+                "step": "0.01"
+            }),
+            
+        }
+
+
+class WeeklySavingsForm(forms.ModelForm):
+    class Meta:
+        model = WeeklySavings
+        fields = ["amount"]
+        widgets = {
+            "amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "placeholder": "₱0.00",
+                "step": "0.01"
+            }),
+        }
+
+class AllowanceForm(forms.Form):
+    amount = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'P0.00',
             'step': '0.01'
         })
     )
