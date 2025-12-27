@@ -1,0 +1,344 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Transactions - FinanceHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/transaction_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Transactions</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-receipt me-2"></i>All Transactions
+                    </h2>
+                    <p class="text-muted mb-0">View and manage your financial transactions</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                    <button id="exportBtn" class="btn btn-outline-success">
+                        <i class="fas fa-file-export me-1"></i>Export CSV
+                    </button>
+                    <button id="printBtn" class="btn btn-outline-primary">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-icon bg-primary">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="summary-content">
+                    <p class="summary-label">Total Income</p>
+                    <h4 class="summary-value text-primary" id="totalIncome">₱{{ total_income|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-icon bg-danger">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="summary-content">
+                    <p class="summary-label">Total Expenses</p>
+                    <h4 class="summary-value text-danger" id="totalExpenses">₱{{ total_expenses|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-icon bg-info">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div class="summary-content">
+                    <p class="summary-label">Total Savings</p>
+                    <h4 class="summary-value text-info" id="totalSavings">₱{{ total_savings|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-icon bg-success">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="summary-content">
+                    <p class="summary-label">Net Balance</p>
+                    <h4 class="summary-value text-success" id="netBalance">₱{{ net_balance|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Breakdown Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Category Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="category-legend" id="categoryLegend">
+                                <!-- Categories will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>Filters
+            </h5>
+            <button id="toggleFilters" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-chevron-down me-1"></i>Show Filters
+            </button>
+        </div>
+        <div class="card-body filter-panel" id="filterPanel" style="display: none;">
+            <form id="filterForm">
+                <div class="row g-3">
+                    <!-- Date Range Preset -->
+                    <div class="col-md-3">
+                        <label class="form-label">Date Range Preset</label>
+                        <select class="form-select" id="datePreset" name="date_preset">
+                            <option value="">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="this_week">This Week</option>
+                            <option value="this_month" selected>This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="this_year">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Date Range -->
+                    <div class="col-md-3" id="customDateRange" style="display: none;">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="dateFrom" name="date_from">
+                    </div>
+                    <div class="col-md-3" id="customDateRangeTo" style="display: none;">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="dateTo" name="date_to">
+                    </div>
+
+                    <!-- Transaction Type -->
+                    <div class="col-md-3">
+                        <label class="form-label">Transaction Type</label>
+                        <select class="form-select" id="transactionType" name="transaction_type">
+                            <option value="">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                            <option value="savings">Savings</option>
+                        </select>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="col-md-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Amount Range -->
+                    <div class="col-md-2">
+                        <label class="form-label">Min Amount</label>
+                        <input type="number" class="form-control" id="minAmount" name="min_amount" step="0.01" placeholder="₱0.00">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Max Amount</label>
+                        <input type="number" class="form-control" id="maxAmount" name="max_amount" step="0.01" placeholder="₱0.00">
+                    </div>
+
+                    <!-- Search -->
+                    <div class="col-md-4">
+                        <label class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchQuery" name="search" placeholder="Search by title or description...">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="submit" id="applyFiltersBtn" class="btn btn-primary flex-fill">
+                            <i class="fas fa-search me-1"></i>Apply
+                        </button>
+                        <button type="button" id="clearFilters" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sort & Results Info -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <p class="text-muted mb-0">
+                Showing <strong id="resultCount">{{ transactions.count }}</strong> transactions
+            </p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <label class="me-2">Sort by:</label>
+            <select class="form-select d-inline-block w-auto" id="sortBy">
+                <option value="-date">Date (Newest First)</option>
+                <option value="date">Date (Oldest First)</option>
+                <option value="-amount">Amount (High to Low)</option>
+                <option value="amount">Amount (Low to High)</option>
+                <option value="category">Category (A-Z)</option>
+                <option value="transaction_type">Type</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div id="transactionsList" class="row g-3">
+        {% if transactions %}
+            {% for transaction in transactions %}
+            <div class="col-12">
+                <div class="transaction-card" data-transaction-id="{{ transaction.id }}" onclick="showTransactionDetails({{ transaction.id }})">
+                    <div class="transaction-card-body">
+                        <div class="transaction-icon-wrapper">
+                            <div class="transaction-icon {% if transaction.transaction_type == 'income' %}bg-success{% elif transaction.transaction_type == 'expense' %}bg-danger{% else %}bg-info{% endif %}">
+                                {% if transaction.transaction_type == 'income' %}
+                                    <i class="fas fa-arrow-up"></i>
+                                {% elif transaction.transaction_type == 'expense' %}
+                                    <i class="fas fa-arrow-down"></i>
+                                {% else %}
+                                    <i class="fas fa-piggy-bank"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="transaction-details">
+                            <h6 class="transaction-title">{{ transaction.title }}</h6>
+                            <div class="transaction-meta">
+                                <span class="category-badge" style="background: {{ transaction.category.color }}"></span>
+                                <span>{{ transaction.category.name }}</span>
+                                <span class="mx-2">•</span>
+                                <span>{{ transaction.date|date:"M d, Y" }}</span>
+                                {% if transaction.description %}
+                                <span class="mx-2">•</span>
+                                <span class="text-muted">{{ transaction.description|truncatewords:10 }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="transaction-amount-wrapper">
+                            <div class="transaction-amount {% if transaction.transaction_type == 'income' %}text-success{% elif transaction.transaction_type == 'expense' %}text-danger{% else %}text-info{% endif %}">
+                                {% if transaction.transaction_type == 'income' %}+{% elif transaction.transaction_type == 'expense' %}-{% endif %}₱{{ transaction.amount|floatformat:2 }}
+                            </div>
+                            <span class="badge {% if transaction.transaction_type == 'income' %}bg-success{% elif transaction.transaction_type == 'expense' %}bg-danger{% else %}bg-info{% endif %}">
+                                {{ transaction.transaction_type|title }}
+                            </span>
+                        </div>
+
+                        <div class="transaction-actions">
+                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showTransactionDetails({{ transaction.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="empty-state-large">
+                    <i class="fas fa-receipt"></i>
+                    <h4>No Transactions Found</h4>
+                    <p>You haven't recorded any transactions yet, or no transactions match your filters.</p>
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus me-1"></i>Add Your First Transaction
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if transactions %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Transaction pagination">
+                <ul class="pagination justify-content-center" id="paginationNav">
+                    <!-- Pagination will be handled by JS -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Transaction Details Modal -->
+<div class="modal fade" id="transactionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt me-2"></i>Transaction Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="transactionDetailsContent">
+                <!-- Content will be loaded by JS -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Pass Django data to JavaScript
+window.transactionData = {
+    categoryBreakdown: {{ category_breakdown|safe }},
+    transactions: {{ transactions_json|safe }},
+    categories: {{ categories_json|safe }},
+    currentPage: 1,
+    totalPages: {{ total_pages }},
+    perPage: 50
+};
+</script>
+<script src="{% static 'js/transaction_list.js' %}"></script>
+{% endblock %}

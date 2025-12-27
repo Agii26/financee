@@ -1,249 +1,195 @@
+# core/forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from .models import Transaction, Category, Budget, Savings
+from datetime import date
 
-from .models import Profile, Category, Budget, Transaction, Savings
-from decimal import Decimal
-
-
-class SignUpForm(UserCreationForm):
-    email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter your email'
-        })
-    )
-    first_name = forms.CharField(
-        required=True,
+class LoginForm(forms.Form):
+    username = forms.CharField(
+        max_length=150,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'First Name'
+            'placeholder': 'Username or Email',
+            'id': 'username'
         })
     )
-    last_name = forms.CharField(
-        required=True,
-        widget=forms.TextInput(attrs={
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Last Name'
+            'placeholder': 'Password',
+            'id': 'password'
+        })
+    )
+
+
+class UserRegistrationForm(forms.ModelForm):
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Password'
+        })
+    )
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm Password'
         })
     )
     monthly_income = forms.DecimalField(
         required=False,
-        max_digits=12,
+        max_digits=10,
         decimal_places=2,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Monthly Income (₱)',
+            'placeholder': '0.00',
             'step': '0.01'
         })
     )
     money_on_hand = forms.DecimalField(
         required=False,
-        max_digits=12,
+        max_digits=10,
         decimal_places=2,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Current Money on Hand (₱)',
+            'placeholder': '0.00',
             'step': '0.01'
         })
-
     )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
+        fields = ['first_name', 'last_name', 'username', 'email']
         widgets = {
-
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'First Name',
+                'required': True
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Last Name',
+                'required': True
+            }),
             'username': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Username'
+                'placeholder': 'Username',
+                'required': True
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email',
+                'required': True
             }),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['password1'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Password'
-        })
-        self.fields['password2'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Confirm Password'
-        })
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise ValidationError("Passwords don't match")
+        return password2
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("Username already exists")
+        return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('This email address is already registered.')
+            raise ValidationError("Email already exists")
         return email
 
 
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ['monthly_income', 'money_on_hand']
-        widgets = {
-            'monthly_income': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Monthly Income (₱)',
-                'step': '0.01'
-            }),
-            'money_on_hand': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Money on Hand (₱)',
-                'step': '0.01'
-            }),
-        }
-
-class CategoryForm(forms.ModelForm):
-    class Meta:
-        model = Category
-        fields = ['name', 'category_type', 'color']
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Category Name'
-            }),
-            'category_type': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'color': forms.TextInput(attrs={
-                'class': 'form-control',
-                'type': 'color'
-            }),
-        }
-
-class BudgetForm(forms.ModelForm):
-    class Meta:
-        model = Budget
-        fields = ['name', 'amount', 'budget_type', 'category', 'start_date']
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Budget Name'
-            }),
-            'amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Budget Amount (₱)',
-                'step': '0.01'
-            }),
-            'budget_type': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'category': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'start_date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['category'].queryset = Category.objects.filter(user=user)
-
-class TransactionForm(forms.ModelForm):
-    class Meta:
-        model = Transaction
-        fields = ['title', 'description', 'amount', 'transaction_type', 'category', 'date']
-        widgets = {
-            'title': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Transaction Title'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'placeholder': 'Description (optional)',
-                'rows': 3
-            }),
-            'amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Amount (₱)',
-                'step': '0.01'
-            }),
-            'transaction_type': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'category': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['category'].queryset = Category.objects.filter(user=user)
-
-class SavingsForm(forms.ModelForm):
-    class Meta:
-        model = Savings
-        fields = ['amount', 'description', 'date']
-        widgets = {
-            'amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Savings Amount (₱)',
-                'step': '0.01'
-            }),
-            'description': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Description (optional)'
-            }),
-            'date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-        }
-
 class QuickTransactionForm(forms.Form):
-    """Quick form for adding common transactions"""
-    QUICK_CATEGORIES = [
+    CATEGORY_CHOICES = [
+        ('food', 'Food'),
+        ('transportation', 'Transportation'),
         ('bills', 'Bills'),
-        ('wants', 'Wants'),
-        ('needs', 'Needs'),
+        ('entertainment', 'Entertainment'),
+        ('shopping', 'Shopping'),
+        ('other', 'Other'),
     ]
     
     amount = forms.DecimalField(
-        max_digits=12,
+        max_digits=10,
         decimal_places=2,
         widget=forms.NumberInput(attrs={
-            'class': 'form-control form-control-lg',
-            'placeholder': '₱0.00',
+            'class': 'form-control',
+            'placeholder': '0.00',
             'step': '0.01'
         })
     )
     category = forms.ChoiceField(
-        choices=QUICK_CATEGORIES,
+        choices=CATEGORY_CHOICES,
         widget=forms.Select(attrs={
             'class': 'form-select'
         })
     )
     description = forms.CharField(
         required=False,
+        max_length=200,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'What did you spend on?'
+            'placeholder': 'Description (optional)'
         })
     )
 
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if User.objects.filter(username=username).exists():
-            raise forms.ValidationError('This username is already taken.')
-        return username
+class AddCashOnHandForm(forms.Form):
+    amount = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': '0.00',
+            'step': '0.01',
+            'required': True
+        })
+    )
+    description = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Description (optional)'
+        })
+    )
+
+
+class SavingsForm(forms.Form):
+    amount = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': '0.00',
+            'step': '0.01',
+            'required': True
+        })
+    )
+    description = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Description (optional)'
+        })
+    )
+    date = forms.DateField(
+        initial=date.today,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
 
 
 class WeekFilterForm(forms.Form):
-    """Filter data by week using a start date picker."""
     week_start = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -254,33 +200,39 @@ class WeekFilterForm(forms.Form):
 
 
 class MonthFilterForm(forms.Form):
-    """Filter data by month and year."""
-    MONTH_CHOICES = [(i, f"{i:02}") for i in range(1, 13)]
+    MONTH_CHOICES = [(i, date(2000, i, 1).strftime('%B')) for i in range(1, 13)]
+    
     month = forms.ChoiceField(
         choices=MONTH_CHOICES,
         required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        })
     )
     year = forms.IntegerField(
         required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 2000, 'step': 1})
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Year'
+        })
     )
 
 
-class AddCashOnHandForm(forms.Form):
+class WeeklyAllowanceForm(forms.Form):
     amount = forms.DecimalField(
-        max_digits=12,
+        max_digits=10,
         decimal_places=2,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'placeholder': '₱0.00',
-            'step': '0.01'
+            'placeholder': '0.00',
+            'step': '0.01',
+            'required': True
         })
     )
-    description = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
+    date = forms.DateField(
+        initial=date.today,
+        widget=forms.DateInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Description (optional)'
+            'type': 'date'
         })
     )
