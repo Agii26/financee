@@ -4,163 +4,72 @@
 {% block title %}Dashboard - FinanceHub{% endblock %}
 
 {% block extra_css %}
-<style>
-    .quick-action-btn {
-        height: 80px;
-        border-radius: 15px;
-        border: 2px dashed var(--border-color);
-        background: rgba(111, 66, 193, 0.05);
-        transition: all 0.3s ease;
-        color: var(--text-muted);
-    }
-
-    .quick-action-btn:hover {
-        border-color: var(--primary-violet);
-        background: rgba(111, 66, 193, 0.1);
-        color: var(--primary-violet);
-        transform: translateY(-2px);
-    }
-
-    .chart-container {
-        position: relative;
-        height: 400px;
-        background: var(--card-bg);
-        border-radius: 15px;
-        padding: 20px;
-    }
-
-    .budget-progress {
-        margin-bottom: 1rem;
-    }
-
-    .budget-item {
-        background: rgba(111, 66, 193, 0.05);
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        border-left: 4px solid var(--primary-violet);
-    }
-
-    .transaction-item {
-        border-bottom: 1px solid var(--border-color);
-        padding: 0.75rem 0;
-        transition: all 0.3s ease;
-    }
-
-    .transaction-item:hover {
-        background: rgba(111, 66, 193, 0.05);
-        border-radius: 8px;
-        padding: 0.75rem;
-        margin: 0 -0.75rem;
-    }
-
-    .amount-positive {
-        color: var(--success);
-        font-weight: 600;
-    }
-
-    .amount-negative {
-        color: var(--danger);
-        font-weight: 600;
-    }
-
-    .amount-neutral {
-        color: var(--warning);
-        font-weight: 600;
-    }
-
-    .stat-icon {
-        font-size: 2.5rem;
-        opacity: 0.7;
-    }
-
-    .quick-expense-form {
-        background: var(--card-bg);
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border: 2px solid var(--primary-violet);
-    }
-
-    .expense-btn {
-        background: linear-gradient(135deg, var(--danger), #e74c3c);
-        border: none;
-        border-radius: 10px;
-        color: white;
-        font-weight: 600;
-        padding: 0.75rem 2rem;
-        transition: all 0.3s ease;
-    }
-
-    .expense-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
-        color: white;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-lg-2 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-bars me-2"></i>Navigation</h6>
-                </div>
-                <div class="list-group list-group-flush" style="background: var(--card-bg);">
-                    <a href="{% url 'core:dashboard' %}" class="list-group-item list-group-item-action" style="background: var(--card-bg); color: var(--text-light); border-color: var(--border-color);">
-                        <i class="fas fa-chart-line me-2 text-primary"></i> Overview
-                    </a>
-                    <a href="{% url 'core:weekly_report' %}" class="list-group-item list-group-item-action" style="background: var(--card-bg); color: var(--text-light); border-color: var(--border-color);">
-                        <i class="fas fa-calendar-week me-2 text-warning"></i> Weekly
-                    </a>
-                    <a href="{% url 'core:monthly_report' %}" class="list-group-item list-group-item-action" style="background: var(--card-bg); color: var(--text-light); border-color: var(--border-color);">
-                        <i class="fas fa-calendar-alt me-2 text-info"></i> Monthly
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-10">
-    <!-- Welcome Section -->
+    <!-- Low Cash Warning -->
+    {% if profile.money_on_hand < 100 %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Low Balance Warning:</strong> Your cash on hand is below ₱100.00. Consider adding more funds.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Welcome Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-body text-center py-4">
-                    <h1 class="display-6 mb-2">
-                        <i class="fas fa-sun text-warning me-2"></i>
-                        Good {{ current_time|default:"day" }}, {{ user.first_name|default:user.username }}!
-                    </h1>
-                    <p class="lead text-muted">Here's your financial overview for {{ current_month }}</p>
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-1">
+                                <i class="fas fa-sun text-warning me-2"></i>
+                                Welcome back, {{ user.first_name|default:user.username }}!
+                            </h2>
+                            <p class="text-muted mb-0">Here's your financial summary for {{ current_month }}</p>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'core:weekly_report' %}" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="fas fa-calendar-week me-1"></i>Weekly
+                            </a>
+                            <a href="{% url 'core:monthly_report' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-calendar-alt me-1"></i>Monthly
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Expense Form -->
+    <!-- Quick Expense Entry -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="quick-expense-form">
+            <div class="quick-expense-card">
                 <h5 class="mb-3">
                     <i class="fas fa-bolt text-warning me-2"></i>Quick Expense Entry
                 </h5>
-                <form id="quickExpenseForm" class="row g-3">
+                <form id="quickExpenseForm" class="row g-3 align-items-end" data-cash-on-hand="{{ profile.money_on_hand }}">
                     {% csrf_token %}
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Amount (₱)</label>
                         {{ quick_form.amount }}
+                        <small class="form-text text-muted">Max: ₱{{ profile.money_on_hand|floatformat:2 }}</small>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Category</label>
                         {{ quick_form.category }}
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Description</label>
+                    <div class="col-md-4">
+                        <label class="form-label">Description (Optional)</label>
                         {{ quick_form.description }}
                     </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="submit" class="btn expense-btn w-100">
-                            <i class="fas fa-plus"></i>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-plus me-1"></i>Add Expense
                         </button>
                     </div>
                 </form>
@@ -168,131 +77,107 @@
         </div>
     </div>
 
-    <!-- Financial Overview Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
+    <!-- Key Financial Metrics -->
+    <div class="row g-3 mb-4">
+        <!-- Cash on Hand -->
+        <div class="col-lg-3 col-md-6">
             <div class="card stat-card h-100">
-                <div class="card-body text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="stat-label mb-1">Money on Hand</h6>
-                            <div class="stat-value">₱{{ profile.money_on_hand|floatformat:2 }}</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <p class="stat-label mb-2">Cash on Hand</p>
+                            <h3 class="stat-value text-success mb-0" id="cashOnHandValue">₱{{ profile.money_on_hand|floatformat:2 }}</h3>
+                            <small class="text-muted">Available Balance</small>
                         </div>
                         <i class="fas fa-wallet stat-icon text-success"></i>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">Available Balance</small>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCashModal">
-                            <i class="fas fa-plus me-1"></i>Add Cash on Hand
-                        </button>
-                    </div>
+                    <button type="button" class="btn btn-outline-success btn-sm w-100 mt-2" data-bs-toggle="modal" data-bs-target="#addCashModal">
+                        <i class="fas fa-plus me-1"></i>Add Cash
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6 mb-3">
+
+        <!-- Monthly Income -->
+        <div class="col-lg-3 col-md-6">
             <div class="card stat-card h-100">
-                <div class="card-body text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="stat-label mb-1">Monthly Income</h6>
-                            <div class="stat-value">₱{{ monthly_income|floatformat:2 }}</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <p class="stat-label mb-2">Monthly Income</p>
+                            <h3 class="stat-value text-primary mb-0">₱{{ monthly_income|floatformat:2 }}</h3>
+                            <small class="text-muted">This Month</small>
                         </div>
-                        <i class="fas fa-arrow-up stat-icon text-success"></i>
+                        <i class="fas fa-arrow-trend-up stat-icon text-primary"></i>
                     </div>
-                    <small class="text-muted">This Month</small>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6 mb-3">
+
+        <!-- Monthly Expenses -->
+        <div class="col-lg-3 col-md-6">
             <div class="card stat-card h-100">
-                <div class="card-body text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="stat-label mb-1">Monthly Expenses</h6>
-                            <div class="stat-value text-danger">₱{{ monthly_expenses|floatformat:2 }}</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <p class="stat-label mb-2">Monthly Expenses</p>
+                            <h3 class="stat-value text-danger mb-0" id="monthlyExpensesValue">₱{{ monthly_expenses|floatformat:2 }}</h3>
+                            <small class="text-muted">This Month</small>
                         </div>
-                        <i class="fas fa-arrow-down stat-icon text-danger"></i>
+                        <i class="fas fa-arrow-trend-down stat-icon text-danger"></i>
                     </div>
-                    <small class="text-muted">This Month</small>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6 mb-3">
+
+        <!-- Total Savings -->
+        <div class="col-lg-3 col-md-6">
             <div class="card stat-card h-100">
-                <div class="card-body text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="stat-label mb-1">Total Savings</h6>
-                            <div class="stat-value text-info">₱{{ total_savings|floatformat:2 }}</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <p class="stat-label mb-2">Total Savings</p>
+                            <h3 class="stat-value text-info mb-0">₱{{ total_savings|floatformat:2 }}</h3>
+                            <small class="text-muted">All Time</small>
                         </div>
                         <i class="fas fa-piggy-bank stat-icon text-info"></i>
                     </div>
-                    <small class="text-muted">All Time</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Secondary Stats Row -->
-    <div class="row mb-4">
-        <div class="col-lg-4 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Weekly Expenses</h6>
-                    <h4 class="text-warning">₱{{ weekly_expenses|floatformat:2 }}</h4>
-                    <small class="text-muted">Current Week</small>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Monthly Savings</h6>
-                    <h4 class="text-success">₱{{ monthly_savings|floatformat:2 }}</h4>
-                    <small class="text-muted">This Month</small>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Daily Savings</h6>
-                    <h4 class="text-info">₱{{ daily_savings|floatformat:2 }}</h4>
-                    <small class="text-muted">This Month</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts and Analytics Row -->
-    <div class="row mb-4">
-        <!-- Expense Categories Pie Chart -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
+    <!-- Main Content Grid -->
+    <div class="row g-4">
+        <!-- Left Column: Charts -->
+        <div class="col-lg-8">
+            <!-- Expense Breakdown Chart -->
+            <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>Monthly Expenses by Category
+                        <i class="fas fa-chart-pie me-2"></i>Expense Breakdown by Category
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="expensePieChart"></canvas>
-                    </div>
+                    {% if category_expenses %}
+                        <div class="chart-container">
+                            <canvas id="expensePieChart"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-chart-pie"></i>
+                            <p>No expenses recorded this month</p>
+                            <small>Start tracking your expenses to see insights</small>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
 
-        <!-- Monthly Trend Line Chart -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
+            <!-- Spending Trend -->
+            <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>6-Month Expense Trend
+                        <i class="fas fa-chart-line me-2"></i>6-Month Spending Trend
                     </h5>
                 </div>
                 <div class="card-body">
@@ -302,366 +187,149 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Budget Overview and Recent Transactions -->
-    <div class="row mb-4">
-        <!-- Budget Overview -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
+        <!-- Right Column: Lists -->
+        <div class="col-lg-4">
+            <!-- Active Budgets -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Budget Overview
+                        <i class="fas fa-bullseye me-2"></i>Active Budgets
                     </h5>
                 </div>
                 <div class="card-body">
                     {% if budget_overview %}
-                        {% for budget_item in budget_overview %}
+                        {% for item in budget_overview %}
                         <div class="budget-item">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">{{ budget_item.budget.name }}</h6>
-                                <span class="badge bg-primary">{{ budget_item.budget.budget_type|title }}</span>
+                                <h6 class="mb-0">{{ item.budget.name }}</h6>
+                                <span class="badge bg-primary">{{ item.budget.budget_type|title }}</span>
                             </div>
-                            <div class="progress budget-progress">
-                                <div class="progress-bar {% if budget_item.percentage > 90 %}bg-danger{% elif budget_item.percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
-                                     style="width: {{ budget_item.percentage }}%"></div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar {% if item.percentage > 90 %}bg-danger{% elif item.percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     style="width: {{ item.percentage }}%">
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <small class="text-muted">Spent: ₱{{ budget_item.spent|floatformat:2 }}</small>
-                                <small class="text-muted">Budget: ₱{{ budget_item.budget.amount|floatformat:2 }}</small>
+                                <small class="text-muted">₱{{ item.spent|floatformat:2 }} / ₱{{ item.budget.amount|floatformat:2 }}</small>
+                                <small class="{% if item.remaining < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    ₱{{ item.remaining|floatformat:2 }} left
+                                </small>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No budgets set up yet</p>
-                            <a href="#" class="btn btn-outline-primary btn-sm">Create Budget</a>
+                        <div class="empty-state">
+                            <i class="fas fa-bullseye"></i>
+                            <p>No active budgets</p>
+                            <a href="{% url 'core:weekly_report' %}" class="btn btn-outline-primary btn-sm">Create Budget</a>
                         </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Transactions -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
+            <!-- Recent Transactions -->
+            <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fas fa-history me-2"></i>Recent Transactions
+                        <i class="fas fa-receipt me-2"></i>Recent Transactions
                     </h5>
-                    <a href="#" class="btn btn-outline-primary btn-sm">View All</a>
+                    <a href="{% url 'core:transaction_list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-list me-1"></i>View All
+                    </a>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;" id="recentTransactionsList">
                     {% if recent_transactions %}
                         {% for transaction in recent_transactions %}
                         <div class="transaction-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex align-items-start flex-grow-1">
+                                    <div class="me-3 mt-1">
                                         {% if transaction.transaction_type == 'income' %}
-                                            <i class="fas fa-arrow-up text-success"></i>
+                                            <i class="fas fa-arrow-up text-success fa-lg"></i>
                                         {% elif transaction.transaction_type == 'expense' %}
-                                            <i class="fas fa-arrow-down text-danger"></i>
+                                            <i class="fas fa-arrow-down text-danger fa-lg"></i>
                                         {% else %}
-                                            <i class="fas fa-piggy-bank text-info"></i>
+                                            <i class="fas fa-piggy-bank text-info fa-lg"></i>
                                         {% endif %}
                                     </div>
                                     <div>
-                                        <div class="fw-bold">{{ transaction.title }}</div>
-                                        <small class="text-muted">{{ transaction.category.name }} • {{ transaction.date }}</small>
+                                        <h6 class="mb-1">{{ transaction.title }}</h6>
+                                        <small class="text-muted">
+                                            <span class="category-badge" style="background: {{ transaction.category.color }}"></span>
+                                            {{ transaction.category.name }} • {{ transaction.date|date:"M d, Y" }}
+                                        </small>
                                     </div>
                                 </div>
-                                <div class="text-end">
-                                    <div class="{% if transaction.transaction_type == 'income' %}amount-positive{% elif transaction.transaction_type == 'expense' %}amount-negative{% else %}amount-neutral{% endif %}">
+                                <div class="text-end ms-2">
+                                    <strong class="{% if transaction.transaction_type == 'income' %}amount-positive{% elif transaction.transaction_type == 'expense' %}amount-negative{% else %}text-info{% endif %}">
                                         {% if transaction.transaction_type == 'income' %}+{% elif transaction.transaction_type == 'expense' %}-{% endif %}₱{{ transaction.amount|floatformat:2 }}
-                                    </div>
+                                    </strong>
                                 </div>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No transactions yet</p>
-                            <a href="#" class="btn btn-outline-primary btn-sm">Add Transaction</a>
+                        <div class="empty-state">
+                            <i class="fas fa-receipt"></i>
+                            <p>No transactions yet</p>
+                            <small>Use quick expense entry above to start tracking</small>
                         </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt me-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <button class="btn quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                <i class="fas fa-plus fa-2x mb-2"></i>
-                                <span>Add Transaction</span>
-                            </button>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <button class="btn quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                                <span>Create Budget</span>
-                            </button>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <button class="btn quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                <i class="fas fa-piggy-bank fa-2x mb-2"></i>
-                                <span>Add Savings</span>
-                            </button>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <button class="btn quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                <i class="fas fa-tags fa-2x mb-2"></i>
-                                <span>Manage Categories</span>
-                            </button>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <button class="btn quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                <i class="fas fa-file-download fa-2x mb-2"></i>
-                                <span>Export Data</span>
-                            </button>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <button class="btn quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                <i class="fas fa-cog fa-2x mb-2"></i>
-                                <span>Settings</span>
-                            </button>
-                        </div>
+<!-- Add Cash Modal -->
+<div class="modal fade" id="addCashModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--card-bg); border: 2px solid var(--primary-violet);">
+            <div class="modal-header" style="border-bottom-color: var(--border-color);">
+                <h5 class="modal-title">
+                    <i class="fas fa-wallet me-2 text-success"></i>Add Cash on Hand
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'core:add_cash_on_hand' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Amount (₱)</label>
+                        {{ add_cash_form.amount }}
+                        <small class="form-text text-muted">Enter the amount you want to add to your balance</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description (Optional)</label>
+                        {{ add_cash_form.description }}
                     </div>
                 </div>
-            </div>
-        </div>
+                <div class="modal-footer" style="border-top-color: var(--border-color);">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Add Cash
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<!-- Alert Container for Top-Right Notifications -->
+<div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;"></div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Chart configurations
-    const chartData = {{ chart_data|safe }};
-    const monthlyTrend = {{ monthly_trend|safe }};
-
-    // Pie Chart for Expense Categories
-    const pieCtx = document.getElementById('expensePieChart').getContext('2d');
-    new Chart(pieCtx, {
-        type: 'doughnut',
-        data: {
-            labels: chartData.categories,
-            datasets: [{
-                data: chartData.amounts,
-                backgroundColor: chartData.colors,
-                borderColor: '#2d2d2d',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#f8f9fa',
-                        usePointStyle: true,
-                        padding: 20
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#2d2d2d',
-                    titleColor: '#f8f9fa',
-                    bodyColor: '#f8f9fa',
-                    borderColor: '#6f42c1',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            return context.label + ': ₱' + context.parsed.toLocaleString('en-PH', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    // Line Chart for Monthly Trend
-    const lineCtx = document.getElementById('trendLineChart').getContext('2d');
-    new Chart(lineCtx, {
-        type: 'line',
-        data: {
-            labels: monthlyTrend.map(item => item.month),
-            datasets: [{
-                label: 'Monthly Expenses',
-                data: monthlyTrend.map(item => item.amount),
-                borderColor: '#6f42c1',
-                backgroundColor: 'rgba(111, 66, 193, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#6f42c1',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#f8f9fa'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#2d2d2d',
-                    titleColor: '#f8f9fa',
-                    bodyColor: '#f8f9fa',
-                    borderColor: '#6f42c1',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Expenses: ₱' + context.parsed.y.toLocaleString('en-PH', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: '#adb5bd',
-                        callback: function(value) {
-                            return '₱' + value.toLocaleString('en-PH');
-                        }
-                    },
-                    grid: {
-                        color: '#404040'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#adb5bd'
-                    },
-                    grid: {
-                        color: '#404040'
-                    }
-                }
-            }
-        }
-    });
-
-    // Quick Expense Form Handler
-    document.getElementById('quickExpenseForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        
-        fetch('{% url "core:quick_expense" %}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    <i class="fas fa-check-circle me-2"></i>${data.message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
-                
-                // Reset form
-                this.reset();
-                
-                // Reload page after 1 second to update data
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                // Show error message
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    <i class="fas fa-exclamation-circle me-2"></i>Error adding expense. Please try again.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    });
-
-    // Auto-update time-based greeting
-    function updateGreeting() {
-        const hour = new Date().getHours();
-        const greetingIcon = document.querySelector('.fa-sun');
-        const greetingText = document.querySelector('.display-6');
-        
-        if (hour < 12) {
-            greetingIcon.className = 'fas fa-sun text-warning me-2';
-            greetingText.innerHTML = greetingText.innerHTML.replace(/Good \w+/, 'Good morning');
-        } else if (hour < 18) {
-            greetingIcon.className = 'fas fa-sun text-warning me-2';
-            greetingText.innerHTML = greetingText.innerHTML.replace(/Good \w+/, 'Good afternoon');
-        } else {
-            greetingIcon.className = 'fas fa-moon text-info me-2';
-            greetingText.innerHTML = greetingText.innerHTML.replace(/Good \w+/, 'Good evening');
-        }
-    }
-
-    // Update greeting on page load
-    updateGreeting();
+// Pass Django data to JavaScript
+window.dashboardData = {
+    chartData: {{ chart_data|safe }},
+    monthlyTrend: {{ monthly_trend|safe }},
+    hasCategoryExpenses: {% if category_expenses %}true{% else %}false{% endif %},
+    cashOnHand: {{ profile.money_on_hand }},
+    monthlyExpenses: {{ monthly_expenses }}
+};
 </script>
-
-<!-- Add Cash on Hand Modal -->
-<div class="modal fade" id="addCashModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content" style="background: var(--card-bg); border: 2px solid var(--primary-violet);">
-      <div class="modal-header" style="border-bottom-color: var(--border-color);">
-        <h5 class="modal-title"><i class="fas fa-wallet me-2 text-success"></i>Add Cash on Hand</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <form method="post" action="{% url 'core:add_cash_on_hand' %}">
-        {% csrf_token %}
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Amount</label>
-            {{ add_cash_form.amount }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description (optional)</label>
-            {{ add_cash_form.description }}
-          </div>
-        </div>
-        <div class="modal-footer" style="border-top-color: var(--border-color);">
-          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Cash</button>
-        </div>
-      </form>
-    </div>
-  </div>
- </div>
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}

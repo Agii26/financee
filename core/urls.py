@@ -18,5 +18,6 @@ urlpatterns = [
     path('budget/add-monthly/', views.add_monthly_budget, name='add_monthly_budget'),
     path('add-weekly-allowance/', views.add_weekly_allowance, name="add_weekly_allowance"),
     path('add-weekly-savings/', views.add_weekly_savings, name="add_weekly_savings"),
+    path('transactions/', views.transaction_list, name='transaction_list'),
 ]
 
